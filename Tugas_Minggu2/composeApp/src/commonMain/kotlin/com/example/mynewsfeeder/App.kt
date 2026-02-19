@@ -38,7 +38,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-// Warna tema
 private val DarkBg     = Color(0xFF1A1A2E)
 private val CardBg     = Color(0xFF16213E)
 private val AccentBlue = Color(0xFF0F3460)
@@ -123,7 +122,6 @@ fun NewsFeedScreen(
             }
         }
 
-        // Filter bar
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
@@ -147,7 +145,6 @@ fun NewsFeedScreen(
             }
         }
 
-        // Status bar
         Text(
             text = statusMsg,
             color = TextGray,
@@ -158,7 +155,6 @@ fun NewsFeedScreen(
                 .padding(horizontal = 16.dp, vertical = 6.dp)
         )
 
-        // Tombol kontrol
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -181,7 +177,6 @@ fun NewsFeedScreen(
             }
         }
 
-        // List berita
         if (newsFeed.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
