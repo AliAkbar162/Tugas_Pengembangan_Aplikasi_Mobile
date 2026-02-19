@@ -19,37 +19,29 @@ class NewsFeedViewModel(
 ) {
     private val viewModelScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
-    // State: daftar berita di feed
     private val _newsFeed = MutableStateFlow<List<NewsItem>>(emptyList())
     val newsFeed: StateFlow<List<NewsItem>> = _newsFeed.asStateFlow()
 
-    // State: jumlah berita dibaca
     private val _readCount = MutableStateFlow(0)
     val readCount: StateFlow<Int> = _readCount.asStateFlow()
 
-    // State: filter aktif
     private val _activeFilter = MutableStateFlow<NewsCategory?>(null)
     val activeFilter: StateFlow<NewsCategory?> = _activeFilter.asStateFlow()
 
-    // State: feed yang sudah difilter
     private val _filteredFeed = MutableStateFlow<List<NewsItem>>(emptyList())
     val filteredFeed: StateFlow<List<NewsItem>> = _filteredFeed.asStateFlow()
 
-    // State: loading detail
     private val _isLoadingDetail = MutableStateFlow(false)
     val isLoadingDetail: StateFlow<Boolean> = _isLoadingDetail.asStateFlow()
 
-    // State: detail berita yang dipilih
     private val _selectedDetail = MutableStateFlow<NewsDetail?>(null)
     val selectedDetail: StateFlow<NewsDetail?> = _selectedDetail.asStateFlow()
 
-    // State: pesan status
     private val _statusMessage = MutableStateFlow("Tekan Mulai Stream untuk memulai.")
     val statusMessage: StateFlow<String> = _statusMessage.asStateFlow()
 
     private var newsStreamJob: Job? = null
 
-    // Perbarui filteredFeed setiap kali newsFeed atau activeFilter berubah
     private fun updateFilteredFeed() {
         val filter = _activeFilter.value
         _filteredFeed.value = if (filter == null) {
