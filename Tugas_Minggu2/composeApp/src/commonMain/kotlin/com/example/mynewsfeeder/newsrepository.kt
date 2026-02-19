@@ -21,7 +21,6 @@ class NewsRepository {
         NewsItem(12, "Liga Sepak Bola Nasional Musim Baru Dimulai", "Kompetisi sepak bola nasional musim 2025 resmi dibuka.",          NewsCategory.OLAHRAGA),
     )
 
-    // Flow memancarkan berita satu per satu setiap 2 detik
     fun newsFlow(): Flow<NewsItem> = flow {
         val shuffled = allNews.shuffled()
         for (news in shuffled) {
@@ -30,7 +29,6 @@ class NewsRepository {
         }
     }
 
-    // Suspend function untuk ambil detail berita
     suspend fun fetchNewsDetail(newsId: Int): NewsDetail? {
         delay(800)
         val news = allNews.find { it.id == newsId } ?: return null
