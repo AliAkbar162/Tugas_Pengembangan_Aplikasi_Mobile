@@ -100,7 +100,6 @@ fun NewsFeedScreen(
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
 
-        // Header
         Box(
             modifier = Modifier
                 .fillMaxWidth()
