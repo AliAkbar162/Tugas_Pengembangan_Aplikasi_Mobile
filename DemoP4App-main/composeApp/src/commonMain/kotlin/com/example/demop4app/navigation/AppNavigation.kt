@@ -18,6 +18,7 @@ import com.example.demop4app.components.BottomNavBar
 import com.example.demop4app.components.bottomNavItems
 import com.example.demop4app.screens.*
 import com.example.demop4app.viewmodel.NoteViewModel
+import com.example.demop4app.viewmodel.NewsViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -25,6 +26,7 @@ import kotlinx.coroutines.launch
 fun AppNavigation() {
     val navController = rememberNavController()
     val noteViewModel: NoteViewModel = viewModel { NoteViewModel() }
+    val newsViewModel: NewsViewModel = viewModel { NewsViewModel() }
     val uiState by noteViewModel.uiState.collectAsState()
 
     val bottomNavRoutes = bottomNavItems.map { it.route }
@@ -32,7 +34,6 @@ fun AppNavigation() {
     val currentRoute = currentBackStackEntry?.destination?.route
     val showBars = currentRoute in bottomNavRoutes
 
-    // Drawer state for bonus
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
 
@@ -43,7 +44,7 @@ fun AppNavigation() {
             ModalDrawerSheet {
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "Notes App Menu",
+                    "Multi-App Menu",
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.titleLarge
                 )
@@ -69,7 +70,7 @@ fun AppNavigation() {
             topBar = {
                 if (showBars) {
                     CenterAlignedTopAppBar(
-                        title = { Text("Notes App") },
+                        title = { Text(if (currentRoute == Screen.NewsList.route) "Space News" else "Notes App") },
                         navigationIcon = {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(Icons.Default.Menu, contentDescription = "Menu")
@@ -92,6 +93,7 @@ fun AppNavigation() {
                 startDestination = Screen.NoteList.route,
                 modifier         = Modifier.padding(paddingValues)
             ) {
+                // --- Notes App ---
                 composable(Screen.NoteList.route) {
                     NoteListScreenContent(
                         notes = uiState.notes,
@@ -107,6 +109,30 @@ fun AppNavigation() {
                         onNoteClick = { id -> navController.navigate(Screen.NoteDetail.createRoute(id)) },
                         onToggleFavorite = { id -> noteViewModel.toggleFavorite(id) }
                     )
+                }
+
+                // --- News App (Week 6) ---
+                composable(Screen.NewsList.route) {
+                    NewsScreen(
+                        viewModel = newsViewModel,
+                        onArticleClick = { article ->
+                            newsViewModel.selectedArticle = article
+                            navController.navigate(Screen.NewsDetail.route)
+                        }
+                    )
+                }
+
+                composable(Screen.NewsDetail.route) {
+                    val article = newsViewModel.selectedArticle
+                    if (article != null) {
+                        NewsDetailScreen(
+                            article = article,
+                            onBack = { navController.popBackStack() }
+                        )
+                    } else {
+                        // Fallback if somehow article is null
+                        LaunchedEffect(Unit) { navController.popBackStack() }
+                    }
                 }
 
                 composable(Screen.Profile.route) {
