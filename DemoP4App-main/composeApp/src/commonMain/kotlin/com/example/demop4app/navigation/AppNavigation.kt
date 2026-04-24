@@ -19,13 +19,26 @@ import com.example.demop4app.components.bottomNavItems
 import com.example.demop4app.screens.*
 import com.example.demop4app.viewmodel.NoteViewModel
 import com.example.demop4app.viewmodel.NewsViewModel
+import com.example.demop4app.data.repository.NoteRepository
+import com.example.demop4app.database.NoteDatabase
+import com.example.demop4app.settings.SettingsRepository
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppNavigation() {
+fun AppNavigation(
+    noteRepository: NoteRepository? = null,
+    settingsRepository: SettingsRepository? = null
+) {
     val navController = rememberNavController()
-    val noteViewModel: NoteViewModel = viewModel { NoteViewModel() }
+    
+    // Proper ViewModel injection or initialization
+    // For the assignment simplicity, we will assume repositories are available or handle nulls
+    val noteViewModel: NoteViewModel = viewModel { 
+        if (noteRepository != null) NoteViewModel(noteRepository) 
+        else throw IllegalStateException("NoteRepository must be provided")
+    }
+    
     val newsViewModel: NewsViewModel = viewModel { NewsViewModel() }
     val uiState by noteViewModel.uiState.collectAsState()
 
@@ -63,6 +76,18 @@ fun AppNavigation() {
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                     )
                 }
+                
+                // Added Settings to Drawer for Week 7
+                NavigationDrawerItem(
+                    label = { Text("Settings") },
+                    selected = currentRoute == Screen.Settings.route,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        navController.navigate(Screen.Settings.route)
+                    },
+                    icon = { Icon(Icons.Default.Menu, contentDescription = null) },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
             }
         }
     ) {
@@ -95,8 +120,11 @@ fun AppNavigation() {
             ) {
                 // --- Notes App ---
                 composable(Screen.NoteList.route) {
-                    NoteListScreenContent(
+                    NoteListScreen(
                         notes = uiState.notes,
+                        isLoading = uiState.isLoading,
+                        searchQuery = uiState.searchQuery,
+                        onSearchQueryChanged = { noteViewModel.onSearchQueryChanged(it) },
                         onNoteClick = { id -> navController.navigate(Screen.NoteDetail.createRoute(id)) },
                         onAddClick = { navController.navigate(Screen.AddNote.route) },
                         onToggleFavorite = { id -> noteViewModel.toggleFavorite(id) }
@@ -130,13 +158,19 @@ fun AppNavigation() {
                             onBack = { navController.popBackStack() }
                         )
                     } else {
-                        // Fallback if somehow article is null
                         LaunchedEffect(Unit) { navController.popBackStack() }
                     }
                 }
 
                 composable(Screen.Profile.route) {
                     ProfileScreen()
+                }
+
+                // --- Settings (Week 7) ---
+                composable(Screen.Settings.route) {
+                    if (settingsRepository != null) {
+                        SettingsScreen(settingsRepository = settingsRepository)
+                    }
                 }
 
                 composable(
@@ -193,20 +227,4 @@ private fun androidx.navigation.NavOptionsBuilder.popToStart(navController: andr
     }
     launchSingleTop = true
     restoreState = true
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun NoteListScreenContent(
-    notes: List<com.example.demop4app.data.model.Note>,
-    onNoteClick: (Int) -> Unit,
-    onAddClick: () -> Unit,
-    onToggleFavorite: (Int) -> Unit
-) {
-    NoteListScreen(
-        notes = notes,
-        onNoteClick = onNoteClick,
-        onAddClick = onAddClick,
-        onToggleFavorite = onToggleFavorite
-    )
 }

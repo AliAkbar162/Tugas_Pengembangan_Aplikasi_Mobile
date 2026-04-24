@@ -16,4 +16,7 @@ sealed class Screen(val route: String) {
     // News App (Week 6)
     object NewsList : Screen("news_list")
     object NewsDetail : Screen("news_detail")
+
+    // Settings (Week 7)
+    object Settings : Screen("settings")
 }

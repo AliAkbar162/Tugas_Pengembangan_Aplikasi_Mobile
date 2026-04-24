@@ -1,81 +1,84 @@
 package com.example.demop4app.viewmodel
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.example.demop4app.data.model.Note
-import com.example.demop4app.data.model.NoteUiState
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import com.example.demop4app.data.repository.NoteRepository
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 
-class NoteViewModel : ViewModel() {
+data class NoteUiState(
+    val notes: List<Note> = emptyList(),
+    val isLoading: Boolean = false,
+    val searchQuery: String = ""
+)
 
+class NoteViewModel(private val repository: NoteRepository) : ViewModel() {
     private val _uiState = MutableStateFlow(NoteUiState())
     val uiState: StateFlow<NoteUiState> = _uiState.asStateFlow()
 
-    private var nextId = 4
-
     init {
-        // Sample data awal
-        _uiState.update {
-            it.copy(
-                notes = listOf(
-                    Note(1, "Belajar Kotlin", "Kotlin adalah bahasa pemrograman modern untuk Android.", false, "2025-04-01"),
-                    Note(2, "Compose UI", "Jetpack Compose adalah toolkit UI deklaratif dari Google.", true, "2025-04-02"),
-                    Note(3, "KMP Notes", "Kotlin Multiplatform memungkinkan berbagi kode antar platform.", false, "2025-04-03")
-                )
-            )
+        loadNotes()
+    }
+
+    private fun loadNotes() {
+        _uiState.update { it.copy(isLoading = true) }
+        viewModelScope.launch {
+            repository.getAllNotes().collect { notes ->
+                _uiState.update { it.copy(notes = notes, isLoading = false) }
+            }
         }
     }
 
-    fun getNoteById(noteId: Int): Note? {
-        return _uiState.value.notes.find { it.id == noteId }
+    fun onSearchQueryChanged(query: String) {
+        _uiState.update { it.copy(searchQuery = query) }
+        viewModelScope.launch {
+            if (query.isEmpty()) {
+                loadNotes()
+            } else {
+                repository.searchNotes(query).collect { notes ->
+                    _uiState.update { it.copy(notes = notes) }
+                }
+            }
+        }
     }
 
     fun addNote(title: String, content: String) {
-        if (title.isBlank()) return
-        val newNote = Note(
-            id = nextId++,
-            title = title.trim(),
-            content = content.trim(),
-            isFavorite = false,
-            createdAt = "2025-04-07"
-        )
-        _uiState.update { state ->
-            state.copy(notes = state.notes + newNote)
+        viewModelScope.launch {
+            val now = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+            val dateStr = "${now.dayOfMonth}/${now.monthNumber}/${now.year}"
+            repository.insertNote(Note(0, title, content, false, dateStr))
         }
     }
 
-    fun updateNote(noteId: Int, title: String, content: String) {
-        if (title.isBlank()) return
-        _uiState.update { state ->
-            state.copy(
-                notes = state.notes.map { note ->
-                    if (note.id == noteId) note.copy(title = title.trim(), content = content.trim())
-                    else note
-                }
-            )
+    fun updateNote(id: Int, title: String, content: String) {
+        viewModelScope.launch {
+            val note = repository.getNoteById(id)
+            if (note != null) {
+                repository.insertNote(note.copy(title = title, content = content))
+            }
         }
     }
 
-    fun deleteNote(noteId: Int) {
-        _uiState.update { state ->
-            state.copy(notes = state.notes.filter { it.id != noteId })
+    fun deleteNote(id: Int) {
+        viewModelScope.launch {
+            repository.deleteNote(id)
         }
     }
 
-    fun toggleFavorite(noteId: Int) {
-        _uiState.update { state ->
-            state.copy(
-                notes = state.notes.map { note ->
-                    if (note.id == noteId) note.copy(isFavorite = !note.isFavorite)
-                    else note
-                }
-            )
+    fun toggleFavorite(id: Int) {
+        viewModelScope.launch {
+            val note = repository.getNoteById(id)
+            if (note != null) {
+                repository.toggleFavorite(id, !note.isFavorite)
+            }
         }
     }
 
-    fun getFavoriteNotes(): List<Note> {
-        return _uiState.value.notes.filter { it.isFavorite }
+    fun getNoteById(id: Int): Note? {
+        return _uiState.value.notes.find { it.id == id }
     }
 }
