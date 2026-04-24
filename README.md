@@ -1,7 +1,8 @@
 # Week 7 Assignment: Notes App
 
 ## Database Schema
-sql CREATE TABLE NoteEntity ( id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL, content TEXT NOT NULL, isFavorite INTEGER NOT NULL DEFAULT 0, createdAt TEXT NOT NULL );
+<img width="723" height="397" alt="image" src="https://github.com/user-attachments/assets/dccfab23-a0b8-4b19-84c8-de4fc0c39549" />
+
 
 <img width="329" height="541" alt="image" src="https://github.com/user-attachments/assets/d436ff9f-a742-4915-a8e5-68e7aaf5d7c4" />
 <img width="324" height="540" alt="image" src="https://github.com/user-attachments/assets/0d9b1c76-6ab5-4db0-9536-fda71084beed" />
