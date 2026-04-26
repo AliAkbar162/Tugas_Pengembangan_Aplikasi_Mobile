@@ -3,11 +3,13 @@ package com.example.demop4app.navigation
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -19,28 +21,22 @@ import com.example.demop4app.components.bottomNavItems
 import com.example.demop4app.screens.*
 import com.example.demop4app.viewmodel.NoteViewModel
 import com.example.demop4app.viewmodel.NewsViewModel
-import com.example.demop4app.data.repository.NoteRepository
-import com.example.demop4app.database.NoteDatabase
-import com.example.demop4app.settings.SettingsRepository
+import com.example.demop4app.platform.NetworkMonitor
+import org.koin.compose.viewmodel.koinViewModel
+import org.koin.compose.koinInject
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppNavigation(
-    noteRepository: NoteRepository? = null,
-    settingsRepository: SettingsRepository? = null
-) {
+fun AppNavigation() {
     val navController = rememberNavController()
     
-    // Proper ViewModel injection or initialization
-    // For the assignment simplicity, we will assume repositories are available or handle nulls
-    val noteViewModel: NoteViewModel = viewModel { 
-        if (noteRepository != null) NoteViewModel(noteRepository) 
-        else throw IllegalStateException("NoteRepository must be provided")
-    }
+    val noteViewModel: NoteViewModel = koinViewModel()
+    val newsViewModel: NewsViewModel = koinViewModel()
+    val networkMonitor: NetworkMonitor = koinInject()
     
-    val newsViewModel: NewsViewModel = viewModel { NewsViewModel() }
     val uiState by noteViewModel.uiState.collectAsState()
+    val isOnline by networkMonitor.isOnline.collectAsState()
 
     val bottomNavRoutes = bottomNavItems.map { it.route }
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
@@ -77,7 +73,6 @@ fun AppNavigation(
                     )
                 }
                 
-                // Added Settings to Drawer for Week 7
                 NavigationDrawerItem(
                     label = { Text("Settings") },
                     selected = currentRoute == Screen.Settings.route,
@@ -85,7 +80,7 @@ fun AppNavigation(
                         scope.launch { drawerState.close() }
                         navController.navigate(Screen.Settings.route)
                     },
-                    icon = { Icon(Icons.Default.Menu, contentDescription = null) },
+                    icon = { Icon(Icons.Default.Settings, contentDescription = null) },
                     modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
                 )
             }
@@ -95,7 +90,29 @@ fun AppNavigation(
             topBar = {
                 if (showBars) {
                     CenterAlignedTopAppBar(
-                        title = { Text(if (currentRoute == Screen.NewsList.route) "Space News" else "Notes App") },
+                        title = { 
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = if (currentRoute == Screen.NewsList.route) "Space News" else "Notes App",
+                                    style = MaterialTheme.typography.titleLarge
+                                )
+                                // Adjusted Network Status Indicator (Size equal to title font, harmonious spacing)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = "● ",
+                                        color = if (isOnline) androidx.compose.ui.graphics.Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
+                                        fontSize = 18.sp
+                                    )
+                                    Text(
+                                        text = if (isOnline) "Online" else "Offline",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontSize = 16.sp,
+                                            color = if (isOnline) androidx.compose.ui.graphics.Color(0xFF4CAF50) else MaterialTheme.colorScheme.error
+                                        )
+                                    )
+                                }
+                            }
+                        },
                         navigationIcon = {
                             IconButton(onClick = { scope.launch { drawerState.open() } }) {
                                 Icon(Icons.Default.Menu, contentDescription = "Menu")
@@ -118,7 +135,6 @@ fun AppNavigation(
                 startDestination = Screen.NoteList.route,
                 modifier         = Modifier.padding(paddingValues)
             ) {
-                // --- Notes App ---
                 composable(Screen.NoteList.route) {
                     NoteListScreen(
                         notes = uiState.notes,
@@ -139,7 +155,6 @@ fun AppNavigation(
                     )
                 }
 
-                // --- News App (Week 6) ---
                 composable(Screen.NewsList.route) {
                     NewsScreen(
                         viewModel = newsViewModel,
@@ -166,11 +181,8 @@ fun AppNavigation(
                     ProfileScreen()
                 }
 
-                // --- Settings (Week 7) ---
                 composable(Screen.Settings.route) {
-                    if (settingsRepository != null) {
-                        SettingsScreen(settingsRepository = settingsRepository)
-                    }
+                    SettingsScreen()
                 }
 
                 composable(

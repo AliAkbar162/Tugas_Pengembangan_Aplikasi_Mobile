@@ -7,31 +7,29 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.demop4app.navigation.AppNavigation
 import com.example.demop4app.settings.SettingsRepository
-import com.example.demop4app.data.repository.NoteRepository
+import org.koin.compose.KoinContext
+import org.koin.compose.koinInject
 
 @Composable
-fun App(
-    settingsRepository: SettingsRepository? = null,
-    noteRepository: NoteRepository? = null
-) {
-    val isDarkModeState = settingsRepository?.isDarkMode?.collectAsState(initial = isSystemInDarkTheme())
-    val isDark = isDarkModeState?.value ?: isSystemInDarkTheme()
+fun App() {
+    KoinContext {
+        val settingsRepository: SettingsRepository = koinInject()
+        val isDarkModeState = settingsRepository.isDarkMode.collectAsState(initial = isSystemInDarkTheme())
+        val isDark = isDarkModeState.value
 
-    val colorScheme = if (isDark) {
-        darkColorScheme()
-    } else {
-        lightColorScheme()
-    }
+        val colorScheme = if (isDark) {
+            darkColorScheme()
+        } else {
+            lightColorScheme()
+        }
 
-    MaterialTheme(colorScheme = colorScheme) {
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color    = MaterialTheme.colorScheme.background
-        ) {
-            AppNavigation(
-                noteRepository = noteRepository,
-                settingsRepository = settingsRepository
-            )
+        MaterialTheme(colorScheme = colorScheme) {
+            Surface(
+                modifier = Modifier.fillMaxSize(),
+                color    = MaterialTheme.colorScheme.background
+            ) {
+                AppNavigation()
+            }
         }
     }
 }
