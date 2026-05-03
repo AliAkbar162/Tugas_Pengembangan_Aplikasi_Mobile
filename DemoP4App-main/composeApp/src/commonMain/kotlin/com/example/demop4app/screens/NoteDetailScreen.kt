@@ -2,11 +2,7 @@ package com.example.demop4app.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -20,7 +16,8 @@ fun NoteDetailScreen(
     onBack: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onToggleFav: () -> Unit
+    onToggleFav: () -> Unit,
+    onSummarize: () -> Unit
 ) {
     var showDeleteDialog by remember { mutableStateOf(false) }
 
@@ -41,6 +38,13 @@ fun NoteDetailScreen(
                     }
                 },
                 actions = {
+                    IconButton(onClick = onSummarize) {
+                        Icon(
+                            imageVector = Icons.Default.Info, // Menggunakan Info agar tidak Unresolved reference
+                            contentDescription = "AI Summary",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
                     IconButton(onClick = onToggleFav) {
                         Icon(
                             imageVector = if (note.isFavorite) Icons.Default.Favorite

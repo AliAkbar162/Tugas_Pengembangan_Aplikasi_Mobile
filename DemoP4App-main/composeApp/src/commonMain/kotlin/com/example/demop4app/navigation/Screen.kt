@@ -12,6 +12,11 @@ sealed class Screen(val route: String) {
     object EditNote : Screen("edit_note/{noteId}") {
         fun createRoute(noteId: Int) = "edit_note/$noteId"
     }
+    
+    // AI Feature
+    object AISummary : Screen("ai_summary/{noteId}") {
+        fun createRoute(noteId: Int) = "ai_summary/$noteId"
+    }
 
     // News App (Week 6)
     object NewsList : Screen("news_list")

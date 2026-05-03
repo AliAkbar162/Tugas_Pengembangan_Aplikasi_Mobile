@@ -19,6 +19,7 @@ import androidx.navigation.navArgument
 import com.example.demop4app.components.BottomNavBar
 import com.example.demop4app.components.bottomNavItems
 import com.example.demop4app.screens.*
+import com.example.demop4app.ui.AIScreen
 import com.example.demop4app.viewmodel.NoteViewModel
 import com.example.demop4app.viewmodel.NewsViewModel
 import com.example.demop4app.platform.NetworkMonitor
@@ -65,7 +66,7 @@ fun AppNavigation() {
                         onClick = {
                             scope.launch { drawerState.close() }
                             navController.navigate(item.route) {
-                                popToStart(navController)
+                                popToStart()
                             }
                         },
                         icon = { Icon(item.icon, contentDescription = null) },
@@ -96,7 +97,6 @@ fun AppNavigation() {
                                     text = if (currentRoute == Screen.NewsList.route) "Space News" else "Notes App",
                                     style = MaterialTheme.typography.titleLarge
                                 )
-                                // Adjusted Network Status Indicator (Size equal to title font, harmonious spacing)
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     Text(
                                         text = "● ",
@@ -191,7 +191,8 @@ fun AppNavigation() {
                 ) { backStackEntry ->
                     val noteId = backStackEntry.arguments?.getInt("noteId") ?: 0
                     val note = noteViewModel.getNoteById(noteId)
-                    NoteDetailScreen(
+                    // Be explicit to avoid ambiguity between screens and ui packages
+                    com.example.demop4app.screens.NoteDetailScreen(
                         note = note,
                         onBack = { navController.popBackStack() },
                         onEdit = { navController.navigate(Screen.EditNote.createRoute(noteId)) },
@@ -199,7 +200,20 @@ fun AppNavigation() {
                             noteViewModel.deleteNote(noteId)
                             navController.popBackStack()
                         },
-                        onToggleFav = { noteViewModel.toggleFavorite(noteId) }
+                        onToggleFav = { noteViewModel.toggleFavorite(noteId) },
+                        onSummarize = { navController.navigate(Screen.AISummary.createRoute(noteId)) }
+                    )
+                }
+
+                composable(
+                    route = Screen.AISummary.route,
+                    arguments = listOf(navArgument("noteId") { type = NavType.IntType })
+                ) { backStackEntry ->
+                    val noteId = backStackEntry.arguments?.getInt("noteId") ?: 0
+                    val note = noteViewModel.getNoteById(noteId)
+                    AIScreen(
+                        noteContent = note?.content ?: "",
+                        onBack = { navController.popBackStack() }
                     )
                 }
 
@@ -233,8 +247,8 @@ fun AppNavigation() {
     }
 }
 
-private fun androidx.navigation.NavOptionsBuilder.popToStart(navController: androidx.navigation.NavController) {
-    popUpTo(navController.graph.startDestinationId) {
+private fun androidx.navigation.NavOptionsBuilder.popToStart() {
+    popUpTo(Screen.NoteList.route) {
         saveState = true
     }
     launchSingleTop = true
